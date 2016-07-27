@@ -8,7 +8,7 @@
             [clj-time.format :as format]
             [clj-time.core :as time])
 
-  (:import [org.apache.http.entity StringEntity]))
+  (:import [org.apache.http.entity StringEntity ByteArrayEntity]))
 
 (def ^:const tc-dir "aws4_testsuite/")
 
@@ -235,6 +235,24 @@
            (:headers sreq))
         "Body as StringEntity")))
 
+(deftest bytearrayentity-body
+  (let [opts          {:region "us-east-1"
+                       :service "host"
+                       :access-key "AKIDEXAMPLE"
+                       :secret-key "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
+        req           (-> "post-x-www-form-urlencoded"
+                          read-req
+                          str->request-map
+                          (update :body #(.getBytes %)))
+        sreq          (((aws-sig4/build-wrap-aws-auth opts)
+                        identity)
+                       req)
+        expected-sreq (-> "post-x-www-form-urlencoded"
+                          read-sreq
+                          str->request-map)]
+    (is (= (:headers expected-sreq)
+           (:headers sreq))
+        "Body as ByteArrayEntity")))
 
 ;; AWS TEST CASES
 ;; ==============
